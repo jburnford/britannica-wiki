@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>The Encyclopædia’s World — map</title><link rel="stylesheet" href="style.css"></head><body><div class="wrap"><div class="crumb"><a href="index.html">Encyclopædia Britannica 1771–1860</a></div><main><div class="eyebrow">12,328 places, as the editions printed them</div><h1 class="headword">The Encyclopædia’s World</h1><p class="meta">Every point is a coordinate printed in a gazetteer entry (“W. Long. 69. 48. N. Lat. 46. 55.”) — the world as the Britannica measured it, not as we do. Toggle editions to watch coverage grow. Verified misprints (SCARBOROUGH’s transposed latitude would put Yorkshire on the equator) are plotted at their true position, dashed, with the coordinate as printed in the popup.</p><div id="map" style="height:72vh;border:1px solid var(--ink)"></div><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"><link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"><script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script><script>
+const ART={"EB.1": "https://jimclifford.ca/britannica-articles-1", "EB.4": "https://jimclifford.ca/britannica-articles-1", "EB.5": "https://jimclifford.ca/britannica-articles-1", "EB.7": "https://jimclifford.ca/britannica-articles-1", "EB.9": "https://jimclifford.ca/britannica-articles-3", "EB.10": "https://jimclifford.ca/britannica-articles-2", "EB.11": "https://jimclifford.ca/britannica-articles-2", "EB.12": "https://jimclifford.ca/britannica-articles-3", "EB.15": "https://jimclifford.ca/britannica-articles-4", "EB.16": "https://jimclifford.ca/britannica-articles-4"};
+const COL={"EB.1": "#8E2318", "EB.4": "#A85423", "EB.5": "#B98A2E", "EB.9": "#6b7f3d", "EB.10": "#3d7f6f", "EB.11": "#1D4E68", "EB.15": "#4a3d7f", "EB.16": "#26201B", "EB.7": "#8E9AA0", "EB.12": "#8E9AA0"};
+const LBL={"EB.1": "1st ed. (1771)", "EB.4": "2nd ed. (1778\u201383)", "EB.5": "3rd ed. (1797)", "EB.7": "Suppl. 3rd (1801)", "EB.9": "4th ed. (1810)", "EB.10": "5th ed. (1815)", "EB.11": "6th ed. (1823)", "EB.12": "Suppl. 4\u20136th (1824)", "EB.15": "7th ed. (1842)", "EB.16": "8th ed. (1853\u201360)"};
+fetch("places.json").then(r=>r.json()).then(pts=>{
+ const map=L.map("map").setView([30,0],2);
+ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors",maxZoom:12}).addTo(map);
+ const groups={};
+ const WNOTE={digit:"⚠ likely misprint — other editions place this elsewhere",hemi:"⚠ hemisphere flip suspected",differs:"⚠ differs from other editions",misprint:"⚠ misprint (verified against Wikidata) — plotted at the true position",different_place:"⚠ a different place of this name",period:"○ the era’s own reckoning — off by 1.5–4°",unsure:"⚠ unverified"};
+ for(const [lat,lon,hw,eb,ident,line,w,note,rlat,rlon] of pts){
+  if(!groups[eb]) groups[eb]=L.markerClusterGroup({maxClusterRadius:38});
+  const sus=["digit","hemi","differs","misprint","different_place","unsure"].includes(w);
+  const fix=(w==="misprint"&&rlat!=null);
+  const m=L.circleMarker(fix?[rlat,rlon]:[lat,lon],{radius:5,color:COL[eb]||"#26201B",weight:1.5,fillOpacity:.55,dashArray:sus?"2 3":null});
+  let extra="";
+  if(WNOTE[w]) extra+=WNOTE[w]+"<br>";
+  if(note) extra+="<i>"+note+"</i><br>";
+  if(fix) extra+=`as printed: lat ${lat}, long ${lon}<br>`;
+  else if(rlat!=null) extra+=`actually near <a href="https://www.openstreetmap.org/?mlat=${rlat}&mlon=${rlon}&zoom=6">${rlat}, ${rlon}</a><br>`;
+  m.bindPopup(`<b>${hw}</b><br>${LBL[eb]||eb}<br>${extra}<a href="${ART[eb]}/a/${eb}/${ident}/${line}.html">read the article</a>`);
+  groups[eb].addLayer(m);}
+ const overlays={};
+ for(const eb of Object.keys(LBL)){if(groups[eb])overlays[LBL[eb]]=groups[eb];}
+ for(const eb of ["EB.1","EB.5","EB.11"]) if(groups[eb]) map.addLayer(groups[eb]);
+ L.control.layers(null,overlays,{collapsed:false}).addTo(map);});
+</script></main><footer class="site">Page images digitised by the National Library of Scotland · Text extraction, article segmentation, and lineage analysis are this project's own · <a href="https://jimclifford.ca/britannica-wiki/about.html">About &amp; method</a> · <a href="https://github.com/jburnford/britannica-wiki/issues">Suggest a correction</a></footer></div></body></html>
